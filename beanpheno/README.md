@@ -1,11 +1,7 @@
-# Install
-```
-python setup.py # inside the beanpheno subdirectory
-```
 # Testing the analysis pipeline
 Make sure you have the test data file and run the following commands:
 ```
-python beans rows -m kmeans <test data directory path> <path to an output directory>
+python <PATH TO beans.py> rows -m kmeans <test data directory path> <path to an output directory>
 ```
 
 If the analysis fails and you need to rerun it but want to start over from scratch, include `--reset`
