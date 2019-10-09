@@ -1,6 +1,7 @@
 # Install
-python setup.py
-
+```
+python setup.py # inside the beanpheno subdirectory
+```
 # Testing the analysis pipeline
 Make sure you have the test data file and run the following commands:
 ```
