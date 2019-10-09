@@ -13,7 +13,6 @@ from skimage.io import imread
 from skimage.morphology import binary_closing, binary_opening, square
 from skimage.measure import label, regionprops
 from skimage.filters import sobel
-import seaborn as sns
 
 from logger import get_logger
 log = get_logger()
