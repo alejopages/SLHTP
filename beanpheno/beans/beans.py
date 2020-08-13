@@ -1,7 +1,7 @@
 import click
 import logging
 
-from logger import get_logger
+from .logger import get_logger
 
 
 log = get_logger(level=logging.INFO)
@@ -21,7 +21,7 @@ def Beans(ctx, quiet):
     pass
 
 
-from commands import (
+from .commands import (
     rows,
     add_genotypes
 )

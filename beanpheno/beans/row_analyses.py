@@ -9,7 +9,7 @@ import matplotlib.patches as mpatches
 import numpy as np
 from skimage.color import rgb2hsv, label2rgb
 
-from logger import get_logger
+from .logger import get_logger
 log = get_logger()
 
 TEST_IMAGE_PATH = osp.abspath('./data/MADP_SB_8_003.tif')

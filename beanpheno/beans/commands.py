@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 from skimage.io import imread, imsave
 import numpy as np
 
-from preprocess import (
+from .preprocess import (
     get_filter_kmeans,
     get_filter_thresh,
     sorted_regions
 )
 # from .inout import csv_template
-from row_analyses import row_analysis
-from logger import get_logger
+from .row_analyses import row_analysis
+from .logger import get_logger
 
 
 log = get_logger()

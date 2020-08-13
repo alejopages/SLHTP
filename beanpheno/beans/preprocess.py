@@ -14,7 +14,7 @@ from skimage.morphology import binary_closing, binary_opening, square
 from skimage.measure import label, regionprops
 from skimage.filters import sobel
 
-from logger import get_logger
+from .logger import get_logger
 log = get_logger()
 
 TEST_IMAGE_PATH = osp.abspath('./data/MADP_SB_8_003.tif')
