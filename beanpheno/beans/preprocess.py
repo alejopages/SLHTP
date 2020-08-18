@@ -236,7 +236,9 @@ def get_filter_kmeans(image, opening_selem=10, closing_selem=20, n_clusters=4,
                 divider = make_axes_locatable(ax1)
                 cax = divider.append_axes('right', size='5%', pad=0.1)
                 bounds = list(range(n_clusters+1))
-                norm = mpl.colors.BoundaryNorm(bounds, color_map)
+                # norm = mpl.colors.BoundaryNorm(bounds, color_map)
+                norm = mpl.colors.BoundaryNorm(bounds, n_clusters)
+
                 fig.colorbar(color_map, cax=cax, norm=norm, boundaries=bounds, ticks=list(range(n_clusters)), cmap=CMAP)
                 
                 ax3.imshow(clean, cmap='gray')
