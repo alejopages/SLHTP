@@ -38,7 +38,7 @@ STARTING_SELEM  = 13
 )
 @click.option(
     '-d', '--no-display',
-    help='Whether to not display the figures',
+    help='Don\'t display the figures. Process can be quicker but don\'t use this unless you\'ve been through the analysis already.',
     default=False,
     is_flag=True
 )
@@ -55,7 +55,7 @@ STARTING_SELEM  = 13
     is_flag=True
 )
 def rows(outdir, imgdir, method, no_display, reset, n_clusters):
-    ''' Run row analyses on imgdir and output figures and export to
+    ''' Run row analyses on imgdir, output figures and export to
     outdir '''
 
     if not osp.isdir(outdir):
@@ -87,7 +87,8 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
     resp_selem  = STARTING_SELEM
     rep = False
     for img_file in os.listdir(imgdir):
-        img_num = int(img_file.split('.')[0][4:])
+        # img_num = int(img_file.split('.')[0][4:]) # this line applies specifically to the naming convention on Nate's bean project
+        img_num = img_file # this line makes it so that the Image# field in the ouput csv is the file name.
         log.info(f"Processing {img_file}")
         cached_analysis_file = osp.join(outdir, 'pickles', '.'.join(img_file.split('.')[0:-1]) + '.pkl')
         if osp.exists(cached_analysis_file) and not reset:
