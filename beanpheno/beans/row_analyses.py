@@ -60,7 +60,6 @@ def row_analysis(image, row, row_num, plt_axis=None):
             ))
             area_patch = mpatches.Polygon(mask, edgecolor='b', alpha=0.6)
             plt_axis.add_patch(area_patch)
-            
 
     row_len = len(row) # TODO: filter small objects
     if plt_axis:

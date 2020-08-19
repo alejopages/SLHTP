@@ -98,14 +98,14 @@ def sorted_regions(image):
 
 
 def get_filter_thresh(image, opening_selem=10, closing_selem=20, std_factor=1.0,
-    display=False):
+    auto=False):
     '''
     Desc: Get image filter using thresh hold difference method.
     args:
         image: rgb image
         opening_selem: the square matrix size for removing white speckles
         closing_selem: the square matrix size for removing black speckles
-        display: whether to display the image at the end of the function
+        auto: whether to display the image at the end of the function and prompt user for inputs
     returns:
         filter: black and white image with background pixels as black
     '''
@@ -125,23 +125,24 @@ def get_filter_thresh(image, opening_selem=10, closing_selem=20, std_factor=1.0,
     clean = binary_opening(filter, selem=square(opening_selem))
     clean = binary_closing(clean, selem=square(closing_selem))
 
-    if display:
-        fig, (ax1, ax2, ax3) = plt.subplots(ncols=3, sharey=True, figsize = (15,10))
-        ax1.imshow(image)
-        ax1.set_title('Original')
-        ax2.imshow(filter, cmap='gray')
-        ax2.set_title('Threshold applied')
-        ax3.imshow(clean, cmap='gray')
-        ax3.set_title('Noise removed')
-        plt.axis('off')
-        fig.suptitle("Adjust threshold factor in command line to improve filter")
+    fig, (ax1, ax2, ax3) = plt.subplots(ncols=3, sharey=True, figsize = (15,10))
+    ax1.imshow(image)
+    ax1.set_title('Original')
+    ax2.imshow(filter, cmap='gray')
+    ax2.set_title('Threshold applied')
+    ax3.imshow(clean, cmap='gray')
+    ax3.set_title('Noise removed')
+    plt.axis('off')
+    fig.suptitle("Adjust threshold factor in command line to improve filter")
+    
+    if not auto:
         plt.show()
 
     return clean
 
 
 def get_filter_kmeans(image, opening_selem=10, closing_selem=20, n_clusters=4,
-                      display=False):
+                      auto=False):
     '''
     Desc: Get binary image background filter
     args:
@@ -149,16 +150,16 @@ def get_filter_kmeans(image, opening_selem=10, closing_selem=20, n_clusters=4,
         n_clusters: number of clusters to use in KMeans clustering
         opening_selem: the square matrix size for removing white speckles
         closing_selem: the square matrix size for removing black speckles
-        display: whether to display the image at the end of the function
+        auto: whether to display the image at the end of the function and prompt user for inputs
     returns:
         filter: binary background filter
     '''
+
     break_flag = False
     retrain_flag = False
 
-
     while True:
-        if click.confirm(f'Train model using K={n_clusters}?') or retrain_flag:
+        if auto or click.confirm(f'Train model using K={n_clusters}?') or retrain_flag:
             retrain_flag = False
             if n_clusters in INITIAL_CLUSTERS:
                 model = KMeans( n_clusters=n_clusters,
@@ -201,62 +202,60 @@ def get_filter_kmeans(image, opening_selem=10, closing_selem=20, n_clusters=4,
 
         seg_map = _init_seg_map(model.cluster_centers_)
 
-        if display:
-            while True:
-             
-                # initilize validation plot
-                fig, (ax1, ax2, ax3) = plt.subplots(ncols=3, figsize = (15,10), sharey=True)
-                fig.suptitle("Select label to color mappings")
-                
-                # formatter = plt.FuncFormatter(lambda val, loc: )
+        while True:
+            
+            # initilize validation plot
+            fig, (ax1, ax2, ax3) = plt.subplots(ncols=3, figsize = (15,10), sharey=True)
+            fig.suptitle("Select label to color mappings")
+            
+            # formatter = plt.FuncFormatter(lambda val, loc: )
 
-                ax1.set_title('Labels Mapped')
-                ax2.set_title('Background [blk], Foreground [wht]')
-                ax3.set_title('Noise removed')
+            ax1.set_title('Labels Mapped')
+            ax2.set_title('Background [blk], Foreground [wht]')
+            ax3.set_title('Noise removed')
 
-                log.info("Generating filter")
-                filter = _convert_to_binary(labels, seg_map)
-                # Get user input on segmentation mapping
+            log.info("Generating filter")
+            filter = _convert_to_binary(labels, seg_map)
+            # Get user input on segmentation mapping
 
-                log.info(f"Cleaning noise from image with selem: {opening_selem}")
-                # clear speckled white pixels in the image
-                clean = binary_opening(filter, selem=square(opening_selem))
-                # clear speckled black pixels in the image
-                clean = binary_closing(clean, selem=square(closing_selem))
-                
-                # generate colored label map
-                log.info("Generating label map")
-                mapped_image = _generate_mapped_image(image, labels, colormap)
-                
-                # Make figure
-                ax1.imshow(mapped_image)
-                ax2.imshow(filter, cmap='gray')
-                
-                # make colorbar
-                divider = make_axes_locatable(ax1)
-                cax = divider.append_axes('right', size='5%', pad=0.1)
-                bounds = list(range(n_clusters+1))
-                # norm = mpl.colors.BoundaryNorm(bounds, color_map)
-                norm = mpl.colors.BoundaryNorm(bounds, n_clusters)
+            log.info(f"Cleaning noise from image with selem: {opening_selem}")
+            # clear speckled white pixels in the image
+            clean = binary_opening(filter, selem=square(opening_selem))
+            # clear speckled black pixels in the image
+            clean = binary_closing(clean, selem=square(closing_selem))
+            
+            # generate colored label map
+            log.info("Generating label map")
+            mapped_image = _generate_mapped_image(image, labels, colormap)
+            
+            # Make figure
+            ax1.imshow(mapped_image)
+            ax2.imshow(filter, cmap='gray')
+            
+            # make colorbar
+            divider = make_axes_locatable(ax1)
+            cax = divider.append_axes('right', size='5%', pad=0.1)
+            bounds = list(range(n_clusters+1))
+            # norm = mpl.colors.BoundaryNorm(bounds, color_map)
+            norm = mpl.colors.BoundaryNorm(bounds, n_clusters)
 
-                fig.colorbar(color_map, cax=cax, norm=norm, boundaries=bounds, ticks=list(range(n_clusters)), cmap=CMAP)
-                
-                ax3.imshow(clean, cmap='gray')
-                plt.draw()
+            fig.colorbar(color_map, cax=cax, norm=norm, boundaries=bounds, ticks=list(range(n_clusters)), cmap=CMAP)
+            
+            ax3.imshow(clean, cmap='gray')
+            plt.draw()
+
+            if not auto:
                 plt.show()
-
-                # confirm images
+                plt.close()
                 rep, seg_map, opening_selem = \
                     _kmeans_label_prompt(labels, seg_map, opening_selem)
-                if not rep: 
-                    break_flag = True
-                    break
-                else:
-                    plt.close()
-                # else the segmentation map is done
-            if break_flag:
+            
+            if auto or not rep: 
+                break_flag = True
                 break
-    
+        if break_flag:
+            break
+
     return clean
 
 

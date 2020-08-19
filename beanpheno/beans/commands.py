@@ -21,10 +21,7 @@ from .logger import get_logger
 
 log = get_logger()
 
-
 STARTING_THRESH = 3.5
-STARTING_SELEM  = 13
-
 
 @click.command()
 @click.argument('imgdir')
@@ -34,11 +31,12 @@ STARTING_SELEM  = 13
     help='The segmentation method to use',
     nargs=1,
     type=click.Choice(['region', 'kmeans', 'thresh']),
-    required=True
+    required=True,
+    default='kmeans'
 )
 @click.option(
-    '-d', '--no-display',
-    help='Don\'t display the figures. Process can be quicker but don\'t use this unless you\'ve been through the analysis already.',
+    '-a', '--auto',
+    help="Run through the pipeline with default settings, do not display images or prompt for input.",
     default=False,
     is_flag=True
 )
@@ -49,12 +47,17 @@ STARTING_SELEM  = 13
     default=4
 )
 @click.option(
+    '-s', '--selem',
+    help='Use in conjunction with --auto to set the default selem paramater for noise filtration',
+    default=13
+)
+@click.option(
     '-r', '--reset',
     help='Recompute cached image paramters and recompute filters',
     default=False,
     is_flag=True
 )
-def rows(outdir, imgdir, method, no_display, reset, n_clusters):
+def rows(outdir, imgdir, method, auto, selem, reset, n_clusters):
     ''' Run row analyses on imgdir, output figures and export to
     outdir '''
 
@@ -67,7 +70,7 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
         os.mkdir(osp.join(outdir, 'temp'))
 
     columns = [
-        'Image#', 
+        'ImageFileName', 
         'Row#',
         'num_objs',
         'area',
@@ -84,26 +87,25 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
 
     # set defaults
     resp_thresh = STARTING_THRESH
-    resp_selem  = STARTING_SELEM
+    resp_selem  = selem
     rep = False
     for img_file in os.listdir(imgdir):
-        # img_num = int(img_file.split('.')[0][4:]) # this line applies specifically to the naming convention on Nate's bean project
-        img_num = img_file # this line makes it so that the Image# field in the ouput csv is the file name.
         log.info(f"Processing {img_file}")
         cached_analysis_file = osp.join(outdir, 'pickles', '.'.join(img_file.split('.')[0:-1]) + '.pkl')
         if osp.exists(cached_analysis_file) and not reset:
             log.info(f"Loading data from previous analysis on {img_file}")
             with open(cached_analysis_file, 'rb') as analysis_file:
                 row_data = pkl.load(analysis_file)
-            data = _append_row(data, row_data, img_num)
+            data = _append_row(data, row_data, img_file)
             continue
 
         image = imread(osp.join(imgdir, img_file))
+        
+        if not auto:
+            plt.imshow(image)
+            plt.show()
 
-        plt.imshow(image)
-        plt.show()
-
-        resp_selem = 13 # Default binary closing matrix size
+        resp_selem = selem  # Reset the default binary closing matrix size
 
         if method == 'kmeans':
             while True:
@@ -117,27 +119,25 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
                     filter = get_filter_kmeans(image,
                         n_clusters=n_clusters,
                         opening_selem=resp_selem,
-                        display=not no_display)
+                        auto=auto)
                     fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(15,15))
                     ax1.imshow(filter)
 
                 rows = sorted_regions(filter)
 
-                if no_display:
-                    ax2=None
-                else:
-                    ax2.imshow(image)
+                ax2.imshow(image)
 
                 row_data = {}
                 for row_num, row in enumerate(rows):
                     row_data[row_num] = row_analysis(image, row, row_num, plt_axis=ax2)
 
                 plt.savefig(osp.join(outdir, osp.basename(img_file)))
-                if not no_display:
+                if not auto:
                     plt.tight_layout()
                     plt.show()
 
-                if _kmeans_reset_prompt():
+
+                if not auto and _kmeans_reset_prompt():
                     continue
                 else:
                     np.save(filter_file, filter)
@@ -148,7 +148,7 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
                 filter = get_filter_thresh(image,
                     std_factor=resp_thresh,
                     opening_selem=resp_selem,
-                    display=not no_display)
+                    auto=auto)
                 # only prompt if displaying image
 
                 rep, resp_thresh, resp_selem = _thresh_reset_prompt(resp_thresh, resp_selem)
@@ -156,11 +156,8 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
 
                 rows = sorted_regions(filter)
 
-                if no_display:
-                    ax=None
-                else:
-                    fig, ax = plt.subplots()
-                    ax.imshow(image)
+                fig, ax = plt.subplots()
+                ax.imshow(image)
 
                 row_data = {}
 
@@ -168,20 +165,20 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
                     row_data[row_num+1] = row_analysis(image, row, row_num, plt_axis=ax)
 
                 plt.savefig(osp.join(outdir, osp.basename(img_file)))
-                if not no_display:
+                if not auto:
                     plt.tight_layout()
                     plt.show()
+                    rep, resp_thresh, resp_selem = _thresh_reset_prompt(resp_thresh, resp_selem)
+                    if rep:
+                        continue
+                
+                break
 
-                rep, resp_thresh, resp_selem = _thresh_reset_prompt(resp_thresh, resp_selem)
-                if rep:
-                    continue
-                else:
-                    break
         else:
             click.echo(f'Invalid method designation: {method}')
             return False
 
-        data = _append_row(data, row_data, img_num)
+        data = _append_row(data, row_data, img_file)
 
         log.info("Caching row analysis")
         with open(cached_analysis_file, 'wb') as analysis_file:
@@ -192,11 +189,11 @@ def rows(outdir, imgdir, method, no_display, reset, n_clusters):
     data[columns].to_csv(osp.join(outdir, "export.csv"))
     
 
-def _append_row(data, row, img_num):
+def _append_row(data, row, img_file):
     for row_num, row_data in row.items():
         temp = row_data.copy()
         temp['Row#'] = row_num
-        temp['Image#'] = img_num
+        temp['Image#'] = img_file
         data = data.append(pd.DataFrame.from_dict([temp]), sort=True)
     return data
 
