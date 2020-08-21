@@ -53,7 +53,7 @@ STARTING_THRESH = 3.5
 )
 @click.option(
     '-r', '--reset',
-    help='Recompute cached image paramters and recompute filters',
+    help='Recompute saved image paramters and recompute filters',
     default=False,
     is_flag=True
 )
@@ -70,7 +70,7 @@ def rows(outdir, imgdir, method, auto, selem, reset, n_clusters):
         os.mkdir(osp.join(outdir, 'temp'))
 
     columns = [
-        'ImageFileName', 
+        'Image#', 
         'Row#',
         'num_objs',
         'area',
@@ -91,10 +91,10 @@ def rows(outdir, imgdir, method, auto, selem, reset, n_clusters):
     rep = False
     for img_file in os.listdir(imgdir):
         log.info(f"Processing {img_file}")
-        cached_analysis_file = osp.join(outdir, 'pickles', '.'.join(img_file.split('.')[0:-1]) + '.pkl')
-        if osp.exists(cached_analysis_file) and not reset:
+        saved_analysis_file = osp.join(outdir, 'pickles', '.'.join(img_file.split('.')[0:-1]) + '.pkl')
+        if osp.exists(saved_analysis_file) and not reset:
             log.info(f"Loading data from previous analysis on {img_file}")
-            with open(cached_analysis_file, 'rb') as analysis_file:
+            with open(saved_analysis_file, 'rb') as analysis_file:
                 row_data = pkl.load(analysis_file)
             data = _append_row(data, row_data, img_file)
             continue
@@ -181,7 +181,7 @@ def rows(outdir, imgdir, method, auto, selem, reset, n_clusters):
         data = _append_row(data, row_data, img_file)
 
         log.info("Caching row analysis")
-        with open(cached_analysis_file, 'wb') as analysis_file:
+        with open(saved_analysis_file, 'wb') as analysis_file:
             pkl.dump(row_data, analysis_file)
 
     log.info("Exporting data to csv")

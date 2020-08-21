@@ -31,8 +31,6 @@ The original intention of this project was to make a fully automated pipeline bu
 
 After installation, you will have a command "beans" that can be run from anywhere in your system (there might be issues if you try to run it from within the source directory itself). For a list of commands run `beans --help`. There are only two command, add-genotypes and rows. The command that runs the analysis pipeline is `rows`. Run `beans rows --help` for a list of arguments and options.
 
-
-
 One of the options is the `--method` option. It is set to kmeans by default so if you would like to use the kmeans method, simply don't include this option. Please note that the kmeans method was by far the most effective method and I wouldn't suggest using the other methods. Bare in mind that this was a prototype package, meaning that some of the features were implemented to test an idea, and remain only as artifacts.
 
 E.g.
@@ -64,16 +62,3 @@ The number of clusters, or K in the K Means method, effects the precision of the
 The selem is the size of the matrix used to remove speckles from the image. A larger selem will remove larger speckles but may end up eating away at the target objects in your image. 
 
 < show example image of low selem, then high selem. >
-
-# Testing the analysis pipeline
-Make sure you have the test data file and run the following commands:
-```
-python <PATH TO beans.py> rows -m kmeans <test data directory path> <path to an output directory>
-```
-
-If the analysis fails and you need to rerun it but want to start over from scratch, include `--reset`
-
-After you get the export, you can add the genotype names to each entry by running:
-```
-python beans add-genotypes <export file path> <genotypes file path>
-```

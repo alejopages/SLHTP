@@ -164,10 +164,9 @@ def get_filter_kmeans(image, opening_selem=10, closing_selem=20, n_clusters=4,
             if n_clusters in INITIAL_CLUSTERS:
                 model = KMeans( n_clusters=n_clusters,
                                 init=INITIAL_CLUSTERS[n_clusters],
-                                n_jobs=-1)
+                                n_init=1 )
             else:
-                model = KMeans( n_clusters=n_clusters,
-                                n_jobs=-1) 
+                model = KMeans( n_clusters=n_clusters ) 
 
             log.info('Training K Means model')
             labels = model.fit_predict(
@@ -239,7 +238,7 @@ def get_filter_kmeans(image, opening_selem=10, closing_selem=20, n_clusters=4,
             # norm = mpl.colors.BoundaryNorm(bounds, color_map)
             norm = mpl.colors.BoundaryNorm(bounds, n_clusters)
 
-            fig.colorbar(color_map, cax=cax, norm=norm, boundaries=bounds, ticks=list(range(n_clusters)), cmap=CMAP)
+            fig.colorbar(color_map, cax=cax, boundaries=bounds, ticks=list(range(n_clusters)))
             
             ax3.imshow(clean, cmap='gray')
             plt.draw()
