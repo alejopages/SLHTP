@@ -1,6 +1,6 @@
 Click==7.0
 -e git+https://github.com/alejandropages/SL.git@5ae9ae34b62d3b5a4448d3592eabb8dee42ff861#egg=earpheno&subdirectory=earpheno
-numpy==1.17.3
+numpy==1.21.0
 opencv-python==4.2.0.32
 pandas==0.25.2
 python-dateutil==2.8.0
